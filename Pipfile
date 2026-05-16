@@ -1,0 +1,28 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+uvicorn = "*"
+pydantic-settings = "*"
+psycopg2-binary = "*"
+alembic = "*"
+sqlalchemy = "*"
+pydantic = {extras = ["email"], version = "*"}
+requests = "*"
+yfinance = "*"
+pykakasi = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.13"
+python_full_version = "3.13.7"
+
+[scripts]
+start = "uvicorn app.main:app --reload"
+autogenerate = "alembic revision --autogenerate -m"
+upgrade = "alembic upgrade head"
+init = "alembic init migration"
