@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from app.domain.models.stock_list import StockList
+from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 
 
 class StockListRepository(ABC):
@@ -10,6 +11,10 @@ class StockListRepository(ABC):
 
     @abstractmethod
     def get_list_by_id(self, id: int) -> StockList | None:
+        pass
+
+    @abstractmethod
+    def get_all_lists_with_count(self, account_id: int) -> list[StockListWithCountSchema]:
         pass
 
     @abstractmethod

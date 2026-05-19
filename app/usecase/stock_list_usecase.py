@@ -1,6 +1,7 @@
 
 import pprint
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.service.stock_info_provider import StockInfoProvider
 from app.util.number_utils import NumberUtils
 from app.db.redis_cache import redis_cache
@@ -29,14 +30,15 @@ class StockListUseCase:
         self.stock_list_stock_service = stock_list_stock_service
         self.stock_info_provider = stock_info_provider
 
-    def create_stock_list(self, stock_list: StockList) -> StockList:
-        return self.stock_list_service.create_stock_list(stock_list)
+    def create_stock_list(self, name: str, account_id: int) -> StockList:
+        self.stock_list_service.create_stock_list(
+            StockList(name=name, account_id=account_id))
 
-    def update_stock_list(self, stock_list_id: int, name: str) -> StockList:
+    def update_stock_list(self, stock_list_id: int, name: str) -> None:
         self.stock_list_service.get_stock_list_by_id(
             stock_list_id)
 
-        return self.stock_list_service.update_stock_list_name(stock_list_id, name)
+        self.stock_list_service.update_stock_list_name(stock_list_id, name)
 
     def add_symbols_to_list(self, stock_list_id: int, symbols: list[str]) -> None:
         self.stock_list_service.get_stock_list_by_id(stock_list_id)
@@ -113,6 +115,10 @@ class StockListUseCase:
                 items=stocks
             )
         )
+
+    def get_all_stock_lists(self, account_id: int) -> list[StockListWithCountSchema]:
+        stock_lists = self.stock_list_service.get_all_lists_with_count(account_id)
+        return [StockListWithCountSchema(id=stock_list.id, name=stock_list.name, count=stock_list.count) for stock_list in stock_lists]
 
     def _fetch_info(self, symbol) -> tuple[str, dict | None]:
         cached = redis_cache.get(symbol)

@@ -14,6 +14,7 @@ pydantic = {extras = ["email"], version = "*"}
 requests = "*"
 yfinance = "*"
 pykakasi = "*"
+redis = "*"
 
 [dev-packages]
 

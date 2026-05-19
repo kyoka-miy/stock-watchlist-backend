@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from app.domain.models.stock_list import StockList
+from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 
 
 class StockListService(ABC):
@@ -8,11 +9,15 @@ class StockListService(ABC):
         pass
 
     @abstractmethod
-    def update_stock_list_name(self, stock_list_id: int, name: str) -> StockList:
+    def get_all_lists_with_count(self, account_id: int) -> list[StockListWithCountSchema]:
         pass
 
     @abstractmethod
-    def create_stock_list(self, stock_list: StockList) -> StockList:
+    def update_stock_list_name(self, stock_list_id: int, name: str) -> None:
+        pass
+
+    @abstractmethod
+    def create_stock_list(self, stock_list: StockList) -> None:
         pass
 
     @abstractmethod

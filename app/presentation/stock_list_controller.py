@@ -1,37 +1,29 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 
-from app.domain.schemas.stock_list_schema import StockListSchema
+from app.domain.schemas.stock_list_name_account_id_request import StockListNameAccountIdRequest
+from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.domain.schemas.stock_list_with_stocks_schema import StockListWithStocksSchema
-from app.domain.models.stock_list import StockList
 from app.domain.schemas.stock_list_name_request import StockListNameRequest
 from app.domain.schemas.stock_list_symbols_request import StockListSymbolsRequest
 
 from fastapi.responses import JSONResponse
-import yfinance as yf
 from app.usecase.stock_list_usecase import StockListUseCase
 from app.util.constants.sort_order_constants import SortOrderConstants
 
 
-def get_stock_indicators(symbol: str) -> dict:
-    try:
-        ticker = yf.Ticker(symbol)
-        info = ticker.info
-        return info if isinstance(info, dict) else {}
-    except Exception:
-        return {}
-
-
 router = APIRouter(tags=["Stock Lists"], prefix="/stock-lists")
 
-
-@router.post("/", response_model=StockListSchema)
-def create_stock_list(stock_list: StockListSchema, usecase: StockListUseCase = Depends(StockListUseCase)):
-    return usecase.create_stock_list(StockList(**stock_list.model_dump()))
+# TODO: fix
 
 
-@router.put("/{id}", response_model=StockListSchema)
+@router.post("/")
+def create_stock_list(request: StockListNameAccountIdRequest, usecase: StockListUseCase = Depends(StockListUseCase)):
+    usecase.create_stock_list(request.name, request.account_id)
+
+
+@router.put("/{id}")
 def update_name(id: int, request: StockListNameRequest, usecase: StockListUseCase = Depends(StockListUseCase)):
-    return usecase.update_stock_list(id, request.name)
+    usecase.update_stock_list(id, request.name)
 
 
 @router.post("/{id}/stocks")
@@ -53,7 +45,7 @@ def delete_stock_list(id: int, usecase: StockListUseCase = Depends(StockListUseC
 
 
 @router.get("/{id}", response_model=StockListWithStocksSchema)
-def get_stock_list_with_indicators(
+def get_stock_list_with_indicators_by_id(
     id: int,
     pageSize: int = 20,
     pageNumber: int = 1,
@@ -68,3 +60,8 @@ def get_stock_list_with_indicators(
         sortKey=sortKey,
         sortOrder=sortOrder
     )
+
+
+@router.get("/count/{account_id}", response_model=list[StockListWithCountSchema])
+def get_all_stock_lists(account_id: int, usecase: StockListUseCase = Depends(StockListUseCase)):
+    return usecase.get_all_stock_lists(account_id)

@@ -1,4 +1,5 @@
 from fastapi import Depends
+from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.repository.dependencies import get_stock_list_repository
 from app.domain.models.stock_list import StockList
 from app.exceptions.app_exception import AppException
@@ -17,12 +18,15 @@ class StockListServiceImpl(StockListService):
         if not stock_list:
             raise AppException("Stock list not found")
         return stock_list
+    
+    def get_all_lists_with_count(self, account_id: int) -> list[StockListWithCountSchema]:
+        return self.repository.get_all_lists_with_count(account_id)
 
-    def update_stock_list_name(self, stock_list_id: int, name: str) -> StockList:
-        return self.repository.update_list_name(stock_list_id, name)
+    def update_stock_list_name(self, stock_list_id: int, name: str) -> None:
+        self.repository.update_list_name(stock_list_id, name)
 
-    def create_stock_list(self, stock_list: StockList) -> StockList:
-        return self.repository.create_list(stock_list)
+    def create_stock_list(self, stock_list: StockList) -> None:
+        self.repository.create_list(stock_list)
 
     def delete_list(self, stock_list_id: int) -> None:
         self.repository.delete_list(stock_list_id)
