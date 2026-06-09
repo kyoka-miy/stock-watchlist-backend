@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.domain.schemas.stock_list_name_account_id_request import StockListNameAccountIdRequest
+from app.domain.schemas.stock_list_schema import StockListSchema
 from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.domain.schemas.stock_list_with_stocks_schema import StockListWithStocksSchema
 from app.domain.schemas.stock_list_name_request import StockListNameRequest
@@ -8,7 +9,7 @@ from app.domain.schemas.stock_list_symbols_request import StockListSymbolsReques
 
 from fastapi.responses import JSONResponse
 from app.usecase.stock_list_usecase import StockListUseCase
-from app.util.constants.sort_order_constants import SortOrderConstants
+from app.util.enum.sort_orders import SortOrders
 
 
 router = APIRouter(tags=["Stock Lists"], prefix="/stock-lists")
@@ -16,9 +17,9 @@ router = APIRouter(tags=["Stock Lists"], prefix="/stock-lists")
 # TODO: fix
 
 
-@router.post("/")
+@router.post("/", response_model=StockListSchema)
 def create_stock_list(request: StockListNameAccountIdRequest, usecase: StockListUseCase = Depends(StockListUseCase)):
-    usecase.create_stock_list(request.name, request.account_id)
+    return usecase.create_stock_list(request.name, request.account_id)
 
 
 @router.put("/{id}")
@@ -50,7 +51,7 @@ def get_stock_list_with_indicators_by_id(
     pageSize: int = 20,
     pageNumber: int = 1,
     sortKey: str = "symbol",
-    sortOrder: SortOrderConstants = SortOrderConstants.ASC,
+    sortOrder: SortOrders = SortOrders.ASC,
     usecase: StockListUseCase = Depends(StockListUseCase)
 ):
     return usecase.get_stock_list_with_indicators(

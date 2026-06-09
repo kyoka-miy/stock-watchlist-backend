@@ -1,6 +1,5 @@
-
-import pprint
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from app.domain.schemas.stock_list_schema import StockListSchema
 from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.service.stock_info_provider import StockInfoProvider
 from app.util.number_utils import NumberUtils
@@ -15,7 +14,7 @@ from app.service.dependencies import get_stock_info_provider, get_stock_list_ser
 from app.service.impl.stock_list_service_impl import StockListService
 from app.service.impl.stock_list_stock_service_impl import StockListStockService
 
-from app.util.constants.sort_order_constants import SortOrderConstants
+from app.util.enum.sort_orders import SortOrders
 
 
 class StockListUseCase:
@@ -30,8 +29,8 @@ class StockListUseCase:
         self.stock_list_stock_service = stock_list_stock_service
         self.stock_info_provider = stock_info_provider
 
-    def create_stock_list(self, name: str, account_id: int) -> StockList:
-        self.stock_list_service.create_stock_list(
+    def create_stock_list(self, name: str, account_id: int) -> StockListSchema:
+        return self.stock_list_service.create_stock_list(
             StockList(name=name, account_id=account_id))
 
     def update_stock_list(self, stock_list_id: int, name: str) -> None:
@@ -69,7 +68,7 @@ class StockListUseCase:
         # Then delete the stock list itself
         self.stock_list_service.delete_list(stock_list_id)
 
-    def get_stock_list_with_indicators(self, stock_list_id: int, pageSize: int, pageNumber: int, sortKey: str, sortOrder: SortOrderConstants) -> StockListWithStocksSchema:
+    def get_stock_list_with_indicators(self, stock_list_id: int, pageSize: int, pageNumber: int, sortKey: str, sortOrder: SortOrders) -> StockListWithStocksSchema:
         stock_list = self.stock_list_service.get_stock_list_by_id(
             stock_list_id)
 
@@ -104,12 +103,12 @@ class StockListUseCase:
                     industry=info.get("industry")
                 ))
 
-        reverse = sortOrder == SortOrderConstants.DESC
+        reverse = sortOrder == SortOrders.DESC
         stocks.sort(key=lambda x: self._sort_key(x, sortKey), reverse=reverse)
 
         return StockListWithStocksSchema(
             name=stock_list.name,
-            stocks=PageSchema(
+            stocks=PageSchema[StockInfoSchema](
                 pageNumber=pageNumber,
                 pageSize=pageSize,
                 items=stocks
@@ -117,13 +116,11 @@ class StockListUseCase:
         )
 
     def get_all_stock_lists(self, account_id: int) -> list[StockListWithCountSchema]:
-        stock_lists = self.stock_list_service.get_all_lists_with_count(account_id)
+        stock_lists = self.stock_list_service.get_all_lists_with_count(
+            account_id)
         return [StockListWithCountSchema(id=stock_list.id, name=stock_list.name, count=stock_list.count) for stock_list in stock_lists]
 
     def _fetch_info(self, symbol) -> tuple[str, dict | None]:
-        cached = redis_cache.get(symbol)
-        if cached:
-            return symbol, cached
         return symbol, self.stock_info_provider.get_stock_info(symbol)
 
     def _sort_key(self, x: StockInfoSchema, sortKey: str):

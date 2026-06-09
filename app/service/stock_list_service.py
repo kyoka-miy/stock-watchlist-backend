@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from app.domain.models.stock_list import StockList
+from app.domain.schemas.stock_list_schema import StockListSchema
 from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 
 
@@ -17,7 +18,7 @@ class StockListService(ABC):
         pass
 
     @abstractmethod
-    def create_stock_list(self, stock_list: StockList) -> None:
+    def create_stock_list(self, stock_list: StockList) -> StockListSchema:
         pass
 
     @abstractmethod

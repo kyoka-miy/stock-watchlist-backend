@@ -1,4 +1,3 @@
-
 import json
 import redis
 from app.config import settings

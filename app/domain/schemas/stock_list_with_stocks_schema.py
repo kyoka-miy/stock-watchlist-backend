@@ -26,4 +26,4 @@ class StockInfoSchema(BaseModel):
 
 class StockListWithStocksSchema(BaseModel):
     name: str
-    stocks: PageSchema
+    stocks: PageSchema[StockInfoSchema]

@@ -9,3 +9,11 @@ class StockInfoProvider(ABC):
     @abstractmethod
     def get_stock_info(self, symbol: str) -> dict | None:
         pass
+
+    @abstractmethod
+    def search_symbols_by_query(self, query: str) -> list[str]:
+        pass
+
+    @abstractmethod
+    def get_stock_infos_by_symbols(self, symbols: list[str]) -> list[dict]:
+        pass
