@@ -7,6 +7,11 @@ from app.db.redis_cache import redis_cache
 from app.exceptions.app_exception import AppException
 from app.service.stock_info_provider import StockInfoProvider
 from app.util.constants.constants import Constants
+from app.util.japanese_stock_csv_utils import (
+    get_japanese_industry_by_symbol,
+    get_japanese_market_by_symbol,
+    get_japanese_name_by_symbol,
+)
 
 
 class YFinanceInfoProviderImpl(StockInfoProvider):
@@ -30,6 +35,16 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
         try:
             ticker = Ticker(symbol)
             info = ticker.info
+
+            if (self._isJapaneseStock(symbol)):
+                japaneseName = get_japanese_name_by_symbol(symbol)
+                info[Constants.NAME] = japaneseName
+                japaneseIndustry = get_japanese_industry_by_symbol(symbol)
+                if japaneseIndustry is not None:
+                    info[Constants.INDUSTRY] = japaneseIndustry
+                japaneseMarket = get_japanese_market_by_symbol(symbol)
+                if japaneseMarket is not None:
+                    info[Constants.MARKET] = japaneseMarket
             redis_cache.set(symbol, info)
         except Exception:
             raise AppException(
@@ -54,10 +69,14 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
         infos = []
         for symbol in symbols:
             info = self.get_stock_info(symbol)
-            print(f"Fetched info for symbol '{symbol}': {info}")
+            if info is None:
+                continue
             if info.get(Constants.SYMBOL) == symbol \
-            and info.get(Constants.CURRENT_PRICE) is not None \
-                and info.get(Constants.NAME) is not None:
+                    and info.get(Constants.CURRENT_PRICE) is not None \
+                    and info.get(Constants.NAME) is not None:
                 infos.append(info)
 
         return infos
+
+    def _isJapaneseStock(self, symbol: str) -> bool:
+        return symbol.endswith(".T")

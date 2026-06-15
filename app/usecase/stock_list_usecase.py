@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.domain.schemas.stock_list_schema import StockListSchema
 from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.service.stock_info_provider import StockInfoProvider
+from app.util.constants.constants import Constants
 from app.util.number_utils import NumberUtils
 from app.db.redis_cache import redis_cache
 
@@ -82,25 +83,41 @@ class StockListUseCase:
 
             for future in as_completed(future_to_symbol):
                 symbol, info = future.result()
-                if not info:
+                if not info or info.get(Constants.NAME) is None:
                     continue
+
+                current_price = info.get(Constants.CURRENT_PRICE)
+                previous_close = info.get(Constants.PREVIOUS_CLOSE)
+                price_change_ratio = None
+                if isinstance(current_price, (int, float)) and isinstance(previous_close, (int, float)):
+                    if previous_close != 0:
+                        price_change_ratio = (
+                            current_price - previous_close) / previous_close
+
                 stocks.append(StockInfoSchema(
                     symbol=symbol,
-                    name=info.get("longName") or info.get("shortName") or "",
-                    current_price=info.get("currentPrice"),
-                    dividend_yield=info.get("dividendYield"),  # 配当利回り
-                    dividend_per_share=info.get("dividendRate"),  # 1株あたりの配当金
-                    payout_ratio=NumberUtils.get_percent_and_round(
-                        info.get("payoutRatio")),  # 配当性向
-                    per=NumberUtils.get_round(info.get("trailingPE")),
-                    pbr=NumberUtils.get_round(info.get("priceToBook")),
-                    roe=NumberUtils.get_percent_and_round(
-                        info.get("returnOnEquity")),
-                    roa=NumberUtils.get_percent_and_round(
-                        info.get("returnOnAssets")),
-                    market=info.get("exchange"),
-                    sector=info.get("sector"),
-                    industry=info.get("industry")
+                    name=info.get(Constants.NAME),
+                    current_price=current_price,
+                    price_change_ratio=price_change_ratio,
+                    volume=info.get(Constants.VOLUME),
+                    market_cap=info.get(Constants.MARKET_CAP),
+                    dividend_yield=info.get(Constants.DIVIDEND_YIELD),
+                    dividend_per_share=info.get(Constants.DIVIDEND_PER_SHARE),
+                    payout_ratio=info.get(Constants.PAYOUT_RATIO),
+                    per=NumberUtils.get_round(info.get(Constants.PER)),
+                    pbr=NumberUtils.get_round(info.get(Constants.PBR)),
+                    roe=info.get(Constants.ROE),
+                    roa=info.get(Constants.ROA),
+                    operating_margin=info.get(Constants.OPERATING_MARGIN),
+                    revenue_growth=info.get(Constants.REVENUE_GROWTH),
+                    earnings_growth=info.get(Constants.EARNINGS_GROWTH),
+                    profit_growth=info.get(Constants.PROFIT_GROWTH),
+                    current_ratio=NumberUtils.get_round(
+                        info.get(Constants.CURRENT_RATIO)),
+                    free_cash_flow=info.get(Constants.FREE_CASH_FLOW),
+                    market=info.get(Constants.MARKET),
+                    sector=info.get(Constants.SECTOR),
+                    industry=info.get(Constants.INDUSTRY)
                 ))
 
         reverse = sortOrder == SortOrders.DESC

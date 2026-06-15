@@ -34,15 +34,15 @@ class StockUseCase:
 
         return [
             StockSearchResponse(
-                symbol=symbolAndNames[i][Constants.SYMBOL],
-                name=symbolAndNames[i][Constants.NAME],
+                symbol=info.get(Constants.SYMBOL),
+                name=info.get(Constants.NAME),
                 current_price=info.get(Constants.CURRENT_PRICE),
                 per=NumberUtils.get_round(info.get(Constants.PER)),
                 pbr=NumberUtils.get_round(info.get(Constants.PBR)),
                 dividend_yield=NumberUtils.get_round(
                     info.get(Constants.DIVIDEND_YIELD)),
             )
-            for i, info in enumerate(infos) if info
+            for info in infos if info
         ]
 
     def _search_csv(self, query: str) -> list[dict[str, str]]:
