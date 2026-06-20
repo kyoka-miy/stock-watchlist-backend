@@ -14,8 +14,8 @@ class StockListServiceImpl(StockListService):
             stock_list_repository: StockListRepository = Depends(get_stock_list_repository)):
         self.repository = stock_list_repository
 
-    def get_stock_list_by_id(self, id: int) -> StockList:
-        stock_list = self.repository.get_list_by_id(id)
+    def get_stock_list_by_id(self, stock_list_id: int, account_id: int) -> StockList:
+        stock_list = self.repository.get_list_by_id(stock_list_id, account_id)
         if not stock_list:
             raise AppException("Stock list not found")
         return stock_list
@@ -30,5 +30,5 @@ class StockListServiceImpl(StockListService):
         created_list = self.repository.create_list(stock_list)
         return StockListSchema.model_validate(created_list)
 
-    def delete_list(self, stock_list_id: int) -> None:
-        self.repository.delete_list(stock_list_id)
+    def delete_list(self, stock_list_id: int, account_id: int) -> None:
+        self.repository.delete_list(stock_list_id, account_id)

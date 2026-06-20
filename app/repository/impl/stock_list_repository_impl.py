@@ -20,8 +20,8 @@ class StockListRepositoryImpl(StockListRepository):
         self.db.refresh(stock_list)
         return stock_list
 
-    def get_list_by_id(self, id: int) -> StockList | None:
-        return self.db.query(StockList).filter(StockList.id == id).first()
+    def get_list_by_id(self, stock_list_id: int, account_id: int) -> StockList | None:
+        return self.db.query(StockList).filter(StockList.id == stock_list_id, StockList.account_id == account_id).first()
 
     def get_all_lists_with_count(self, account_id: int) -> list[StockListWithCountSchema]:
         return self.db.query(
@@ -42,6 +42,6 @@ class StockListRepositoryImpl(StockListRepository):
                                         stock_list_id).update({StockList.name: name})
         self.db.commit()
 
-    def delete_list(self, stock_list_id: int) -> None:
-        self.db.query(StockList).filter(StockList.id == stock_list_id).delete()
+    def delete_list(self, stock_list_id: int, account_id: int) -> None:
+        self.db.query(StockList).filter(StockList.id == stock_list_id, StockList.account_id == account_id).delete()
         self.db.commit()

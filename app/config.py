@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     REDIS_DB: int
     REDIS_TTL: int
+    GOOGLE_CLIENT_ID: str
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="after")
     def assemble_db_connection(cls, v: Optional[str], values: ValidationInfo) -> Any:

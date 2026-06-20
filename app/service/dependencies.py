@@ -1,3 +1,5 @@
+from app.service.account_service import AccountService
+from app.service.impl.account_service_impl import AccountServiceImpl
 from fastapi import Depends
 
 from app.service import *
@@ -19,4 +21,9 @@ def get_stock_list_stock_service(
 def get_stock_info_provider(
         service: YFinanceInfoProviderImpl = Depends(YFinanceInfoProviderImpl),
 ) -> StockInfoProvider:
+    return service
+
+def get_account_service(
+        service: AccountServiceImpl = Depends(AccountServiceImpl)
+) -> AccountService:
     return service

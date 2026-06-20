@@ -34,14 +34,14 @@ class StockListUseCase:
         return self.stock_list_service.create_stock_list(
             StockList(name=name, account_id=account_id))
 
-    def update_stock_list(self, stock_list_id: int, name: str) -> None:
+    def update_stock_list(self, stock_list_id: int, name: str, account_id: int) -> None:
         self.stock_list_service.get_stock_list_by_id(
-            stock_list_id)
+            stock_list_id, account_id)
 
         self.stock_list_service.update_stock_list_name(stock_list_id, name)
 
-    def add_symbols_to_list(self, stock_list_id: int, symbols: list[str]) -> None:
-        self.stock_list_service.get_stock_list_by_id(stock_list_id)
+    def add_symbols_to_list(self, stock_list_id: int, symbols: list[str], account_id: int) -> None:
+        self.stock_list_service.get_stock_list_by_id(stock_list_id, account_id)
 
         not_registered_symbols = self.stock_list_stock_service.get_not_registered_symbols(
             stock_list_id, symbols)
@@ -53,25 +53,25 @@ class StockListUseCase:
         self.stock_list_stock_service.add_symbols_to_list(
             stock_list_id, valid_symbols)
 
-    def remove_symbols_from_list(self, stock_list_id: int, symbols: list[str]) -> None:
-        self.stock_list_service.get_stock_list_by_id(stock_list_id)
+    def remove_symbols_from_list(self, stock_list_id: int, symbols: list[str], account_id: int) -> None:
+        self.stock_list_service.get_stock_list_by_id(stock_list_id, account_id)
 
         self.stock_list_stock_service.remove_symbols_from_list(
             stock_list_id, symbols)
 
-    def delete_list(self, stock_list_id: int) -> None:
-        self.stock_list_service.get_stock_list_by_id(stock_list_id)
+    def delete_list(self, stock_list_id: int, account_id: int) -> None:
+        self.stock_list_service.get_stock_list_by_id(stock_list_id, account_id)
 
         # Delete all related records from stock_list_stock first
         self.stock_list_stock_service.delete_list(
             stock_list_id)
 
         # Then delete the stock list itself
-        self.stock_list_service.delete_list(stock_list_id)
+        self.stock_list_service.delete_list(stock_list_id, account_id)
 
-    def get_stock_list_with_indicators(self, stock_list_id: int, pageSize: int, pageNumber: int, sortKey: str, sortOrder: SortOrders) -> StockListWithStocksSchema:
+    def get_stock_list_with_indicators(self, stock_list_id: int, pageSize: int, pageNumber: int, sortKey: str, sortOrder: SortOrders, account_id: int) -> StockListWithStocksSchema:
         stock_list = self.stock_list_service.get_stock_list_by_id(
-            stock_list_id)
+            stock_list_id, account_id)
 
         symbols = self.stock_list_stock_service.get_symbols_by_list_id(
             stock_list_id)

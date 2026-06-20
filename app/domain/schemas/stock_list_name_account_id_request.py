@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
 
-class StockListNameAccountIdRequest(BaseModel):
+class StockListNameRequest(BaseModel):
     name: str
-    account_id: int

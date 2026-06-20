@@ -46,3 +46,13 @@ class AccountRepositoryImpl(AccountRepository):
         account = self.db.query(Account).filter(Account.id == id).first()
         self.db.delete(account)
         self.db.commit()
+
+    def get_account_by_google_id(self, google_id: str) -> Optional[Account]:
+        return self.db.query(Account).filter(Account.google_id == google_id).first()
+    
+    def create_account_with_google_id(self, google_id: str, name: str, email: str) -> Account:
+        account = Account(google_id=google_id, name=name, email=email)
+        self.db.add(account)
+        self.db.commit()
+        self.db.refresh(account)
+        return account

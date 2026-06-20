@@ -6,7 +6,7 @@ from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSc
 
 class StockListService(ABC):
     @abstractmethod
-    def get_stock_list_by_id(self, id: int) -> StockList:
+    def get_stock_list_by_id(self, stock_list_id: int, account_id: int) -> StockList:
         pass
 
     @abstractmethod
@@ -22,5 +22,5 @@ class StockListService(ABC):
         pass
 
     @abstractmethod
-    def delete_list(self, stock_list_id: int) -> None:
+    def delete_list(self, stock_list_id: int, account_id: int) -> None:
         pass

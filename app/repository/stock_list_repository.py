@@ -10,7 +10,7 @@ class StockListRepository(ABC):
         pass
 
     @abstractmethod
-    def get_list_by_id(self, id: int) -> StockList | None:
+    def get_list_by_id(self, stock_list_id: int, account_id: int) -> StockList | None:
         pass
 
     @abstractmethod
@@ -22,5 +22,5 @@ class StockListRepository(ABC):
         pass
 
     @abstractmethod
-    def delete_list(self, stock_list_id: int) -> None:
+    def delete_list(self, stock_list_id: int, account_id: int) -> None:
         pass

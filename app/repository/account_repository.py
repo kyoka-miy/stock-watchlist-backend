@@ -23,3 +23,11 @@ class AccountRepository(ABC):
     @abstractmethod
     def delete_account(self, id: int):
         pass
+
+    @abstractmethod
+    def get_account_by_google_id(self, google_id: str) -> Optional[Account]:
+        pass
+
+    @abstractmethod
+    def create_account_with_google_id(self, google_id: str, name: str, email: str) -> Account:
+        pass

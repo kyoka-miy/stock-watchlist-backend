@@ -5,6 +5,7 @@ from app.exceptions.handlers import app_exception_handler, validation_exception_
 from app.presentation.account_controller import router as account_router
 from app.presentation.stock_controller import router as stock_router
 from app.presentation.stock_list_controller import router as stock_list_router
+from app.presentation.auth_controller import router as auth_router
 from app.exceptions.app_exception import AppException
 
 
@@ -30,6 +31,7 @@ app.add_exception_handler(
 app.include_router(account_router)
 app.include_router(stock_router)
 app.include_router(stock_list_router)
+app.include_router(auth_router)
 
 
 @app.get("/")

@@ -10,11 +10,13 @@ pydantic-settings = "*"
 psycopg2-binary = "*"
 alembic = "*"
 sqlalchemy = "*"
-pydantic = {extras = ["email"], version = "*"}
 requests = "*"
 yfinance = "*"
 pykakasi = "*"
 redis = "*"
+google-auth = "*"
+python-jose = "*"
+pydantic = "*"
 
 [dev-packages]
 
