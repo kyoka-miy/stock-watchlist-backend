@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from app.domain.schemas.google_login_request import GoogleLoginRequest
 from app.domain.schemas.login_response import LoginResponse
@@ -9,5 +9,5 @@ router = APIRouter(tags=["Auth"], prefix="/auth")
 
 
 @router.post("/google", response_model=LoginResponse)
-def google_login(request: GoogleLoginRequest, usecase: AuthUseCase = Depends(AuthUseCase)):
-    return usecase.google_login(request.id_token)
+def google_login(request: GoogleLoginRequest, response: Response, usecase: AuthUseCase = Depends(AuthUseCase)):
+    return usecase.google_login(request.id_token, response)

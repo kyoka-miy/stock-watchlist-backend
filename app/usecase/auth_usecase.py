@@ -1,9 +1,10 @@
 from app.domain.schemas.login_response import LoginResponse
 from app.service.dependencies import get_account_service
-from fastapi import Depends
+from fastapi import Depends, Response
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from jose import jwt
+from datetime import datetime, timedelta, timezone
 
 from app.config import settings
 from app.service.account_service import AccountService
@@ -13,7 +14,7 @@ class AuthUseCase:
     def __init__(self, account_service: AccountService = Depends(get_account_service)):
         self.account_service = account_service
 
-    def google_login(self, idToken: str) -> LoginResponse:
+    def google_login(self, idToken: str, response: Response) -> LoginResponse:
         payload = id_token.verify_oauth2_token(
             idToken,
             requests.Request(),
@@ -26,13 +27,42 @@ class AuthUseCase:
             account = self.account_service.create_account(
                 google_id, payload.get("name"), payload.get("email"))
 
-        jwt_payload = {
-            "sub": str(account.id)
+        access_token = self._create_access_token(account.id)
+        refresh_token = self.create_refresh_token(account.id)
+
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=60 * 60 * 24 * 30,
+        )
+
+        return LoginResponse(access_token=access_token)
+
+    def _create_access_token(self, account_id: int) -> str:
+        payload = {
+            "sub": str(account_id),
+            "type": "access",
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
         }
 
-        access_token = jwt.encode(
-            jwt_payload,
+        return jwt.encode(
+            payload,
             settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM
         )
-        return LoginResponse(access_token=access_token)
+
+    def create_refresh_token(self, account_id: int) -> str:
+        payload = {
+            "sub": str(account_id),
+            "type": "refresh",
+            "exp": datetime.now(timezone.utc) + timedelta(days=30),
+        }
+
+        return jwt.encode(
+            payload,
+            settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM,
+        )
