@@ -1,4 +1,5 @@
 from app.domain.schemas.login_response import LoginResponse
+from app.domain.schemas.logout_response import MessageResponse
 from app.service.dependencies import get_account_service
 from fastapi import Depends, Response
 from google.oauth2 import id_token
@@ -39,13 +40,13 @@ class AuthUseCase:
             max_age=60 * 60 * 24 * 30,
         )
 
-        return LoginResponse(access_token=access_token)
+        return LoginResponse(access_token=access_token, name=payload.get("name"), email=payload.get("email"))
 
     def _create_access_token(self, account_id: int) -> str:
         payload = {
             "sub": str(account_id),
             "type": "access",
-            "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),
         }
 
         return jwt.encode(
@@ -66,3 +67,12 @@ class AuthUseCase:
             settings.JWT_SECRET_KEY,
             algorithm=settings.JWT_ALGORITHM,
         )
+
+    def logout(self, response: Response) -> MessageResponse:
+        response.delete_cookie(
+            key="refresh_token",
+            httponly=True,
+            secure=True,
+            samesite="lax",
+        )
+        return MessageResponse(message="Logged out successfully")

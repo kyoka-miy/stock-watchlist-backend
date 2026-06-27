@@ -36,7 +36,7 @@ async def get_account_id_from_token(
     try:
         return _decode_and_validate(token, "access")
     except (InvalidTokenError, ValueError, HTTPException) as e:
-        print("Access token invalid or expired, trying refresh token...", str(e))
+        print("Access token invalid or expired, trying to refresh token...", str(e))
         refresh_token = request.cookies.get("refresh_token")
         if not refresh_token:
             raise HTTPException(status_code=401, detail="No refresh token")
