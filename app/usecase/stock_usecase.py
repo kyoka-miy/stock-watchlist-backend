@@ -3,6 +3,7 @@ from fastapi import Depends
 import pandas as pd
 
 from app.domain.schemas.stock_search_response import StockSearchResponse
+from app.domain.schemas.stock_price_history_response import PricePointSchema, StockPriceHistoryResponse
 
 from app.exceptions.app_exception import AppException
 from app.service.dependencies import get_stock_info_provider
@@ -62,3 +63,13 @@ class StockUseCase:
 
     def _search_api(self, query: str) -> list[dict[str, str]]:
         return self.stock_info_provider.search_symbols_by_query(query)
+
+    def get_price_history(self, symbol: str, period: str, interval: str) -> StockPriceHistoryResponse:
+        points = self.stock_info_provider.get_price_history(
+            symbol, period, interval)
+        return StockPriceHistoryResponse(
+            symbol=symbol,
+            period=period,
+            interval=interval,
+            points=points,
+        )

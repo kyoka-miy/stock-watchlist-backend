@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from app.domain.schemas.stock_price_history_response import PricePointSchema
 
 
 class StockInfoProvider(ABC):
@@ -16,4 +17,8 @@ class StockInfoProvider(ABC):
 
     @abstractmethod
     def get_stock_infos_by_symbols(self, symbols: list[str]) -> list[dict]:
+        pass
+
+    @abstractmethod
+    def get_price_history(self, symbol: str, period: str, interval: str) -> list[PricePointSchema]:
         pass

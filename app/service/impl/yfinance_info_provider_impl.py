@@ -4,6 +4,7 @@ from yfinance import Ticker
 import yfinance as yf
 
 from app.db.redis_cache import redis_cache
+from app.domain.schemas.stock_price_history_response import PricePointSchema
 from app.exceptions.app_exception import AppException
 from app.service.stock_info_provider import StockInfoProvider
 from app.util.constants.constants import Constants
@@ -77,6 +78,44 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
                 infos.append(info)
 
         return infos
+
+    def get_price_history(self, symbol: str, period: str, interval: str) -> list[PricePointSchema]:
+        """
+        Fetch stock price history with Redis caching.
+        Valid periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+        Valid intervals: 1m, 5m, 15m, 30m, 60m, 1h, 1d, 1wk, 1mo
+        """
+        cache_key = f"stock:price-history:{symbol}:{period}:{interval}"
+        cached = redis_cache.get(cache_key)
+        if cached is not None:
+            return [PricePointSchema(**point) for point in cached]
+
+        try:
+            ticker = Ticker(symbol)
+            history = ticker.history(period=period, interval=interval)
+        except Exception as e:
+            raise AppException(
+                f"Failed to fetch price history for symbol: {symbol}") from e
+
+        if history.empty:
+            return []
+
+        points: list[PricePointSchema] = []
+        for index, row in history.iterrows():
+            close_val = row.get("Close")
+            if close_val is None:
+                continue
+            points.append(
+                PricePointSchema(
+                    date=index.isoformat(),
+                    close=float(close_val),
+                )
+            )
+
+        # Convert to dict for Redis caching (JSON serialization)
+        points_dict = [point.model_dump() for point in points]
+        redis_cache.set(cache_key, points_dict)
+        return points
 
     def _isJapaneseStock(self, symbol: str) -> bool:
         return symbol.endswith(".T")
