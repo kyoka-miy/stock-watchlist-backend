@@ -4,6 +4,7 @@ import pandas as pd
 
 from app.domain.schemas.stock_search_response import StockSearchResponse
 from app.domain.schemas.stock_price_history_response import PricePointSchema, StockPriceHistoryResponse
+from app.domain.schemas.stock_dividend_history_response import StockDividendHistoryResponse
 
 from app.exceptions.app_exception import AppException
 from app.service.dependencies import get_stock_info_provider
@@ -46,6 +47,60 @@ class StockUseCase:
             for info in infos if info
         ]
 
+    def get_price_history(self, symbol: str, period: str, interval: str) -> StockPriceHistoryResponse:
+        points = self.stock_info_provider.get_price_history(
+            symbol, period, interval)
+        return StockPriceHistoryResponse(
+            symbol=symbol,
+            period=period,
+            interval=interval,
+            points=points,
+        )
+
+    def get_dividend_history(self, symbol: str, years: int) -> StockDividendHistoryResponse:
+        points = self.stock_info_provider.get_dividend_history(symbol, years)
+
+        average_dividend_per_share = None
+        latest_dividend_yield = None
+        growth_rate_percent = None
+        average_payout_ratio = None
+
+        if points:
+            average_dividend_per_share = round(
+                sum(point.dividend_per_share for point in points) / len(points),
+                2,
+            )
+
+            for point in reversed(points):
+                if point.dividend_yield is not None:
+                    latest_dividend_yield = point.dividend_yield
+                    break
+
+            payout_ratios = [
+                p.payout_ratio for p in points if p.payout_ratio is not None]
+            if payout_ratios:
+                average_payout_ratio = round(
+                    sum(payout_ratios) / len(payout_ratios),
+                    2,
+                )
+
+        if len(points) >= 2 and points[0].dividend_per_share > 0:
+            growth_rate_percent = round(
+                ((points[-1].dividend_per_share /
+                 points[0].dividend_per_share) - 1) * 100,
+                2,
+            )
+
+        return StockDividendHistoryResponse(
+            symbol=symbol,
+            years=years,
+            points=points,
+            average_dividend_per_share=average_dividend_per_share,
+            latest_dividend_yield=latest_dividend_yield,
+            growth_rate_percent=growth_rate_percent,
+            average_payout_ratio=average_payout_ratio,
+        )
+
     def _search_csv(self, query: str) -> list[dict[str, str]]:
         results = []
         try:
@@ -63,13 +118,3 @@ class StockUseCase:
 
     def _search_api(self, query: str) -> list[dict[str, str]]:
         return self.stock_info_provider.search_symbols_by_query(query)
-
-    def get_price_history(self, symbol: str, period: str, interval: str) -> StockPriceHistoryResponse:
-        points = self.stock_info_provider.get_price_history(
-            symbol, period, interval)
-        return StockPriceHistoryResponse(
-            symbol=symbol,
-            period=period,
-            interval=interval,
-            points=points,
-        )
