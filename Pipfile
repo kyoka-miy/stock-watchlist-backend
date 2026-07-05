@@ -18,6 +18,7 @@ pykakasi = "*"
 redis = "*"
 google-auth = "*"
 python-jose = "*"
+pyjwt = "*"
 
 [dev-packages]
 
