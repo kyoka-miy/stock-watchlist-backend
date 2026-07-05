@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, Query
 from app.presentation.dependency import get_account_id_from_token
 from app.domain.schemas.stock_price_history_response import StockPriceHistoryResponse
 from app.domain.schemas.stock_dividend_history_response import StockDividendHistoryResponse
+from app.domain.schemas.stock_cashflow_history_response import StockCashflowHistoryResponse
+from app.domain.schemas.stock_performance_history_response import StockPerformanceHistoryResponse
 from app.usecase.stock_usecase import StockUseCase
 from app.domain.schemas.stock_search_response import StockSearchResponse
 
@@ -33,3 +35,23 @@ def get_dividend_history(
     account_id: int = Depends(get_account_id_from_token),
 ):
     return usecase.get_dividend_history(symbol, years)
+
+
+@router.get("/{symbol}/cashflow-history", response_model=StockCashflowHistoryResponse)
+def get_cashflow_history(
+    symbol: str,
+    years: int = Query(6, ge=1, le=20),
+    usecase: StockUseCase = Depends(),
+    account_id: int = Depends(get_account_id_from_token),
+):
+    return usecase.get_cashflow_history(symbol, years)
+
+
+@router.get("/{symbol}/performance-history", response_model=StockPerformanceHistoryResponse)
+def get_performance_history(
+    symbol: str,
+    years: int = Query(6, ge=1, le=20),
+    usecase: StockUseCase = Depends(),
+    account_id: int = Depends(get_account_id_from_token),
+):
+    return usecase.get_performance_history(symbol, years)

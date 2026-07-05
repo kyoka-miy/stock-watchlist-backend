@@ -7,6 +7,8 @@ import yfinance as yf
 
 from app.db.redis_cache import redis_cache
 from app.domain.schemas.stock_dividend_history_response import DividendHistoryPointSchema
+from app.domain.schemas.stock_cashflow_history_response import CashflowHistoryPointSchema
+from app.domain.schemas.stock_performance_history_response import PerformanceHistoryPointSchema
 from app.domain.schemas.stock_price_history_response import PricePointSchema
 from app.exceptions.app_exception import AppException
 from app.service.stock_info_provider import StockInfoProvider
@@ -193,6 +195,100 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
                 )
             )
 
+        points_dict = [point.model_dump() for point in points]
+        redis_cache.set(cache_key, points_dict)
+        return points
+
+    def get_cashflow_history(self, symbol: str, years: int) -> list[CashflowHistoryPointSchema]:
+        cache_key = f"stock:cashflow-history:v1:{symbol}:{years}"
+        cached = redis_cache.get(cache_key)
+        if cached is not None:
+            return [CashflowHistoryPointSchema(**point) for point in cached]
+
+        try:
+            ticker = Ticker(symbol)
+            cashflow = ticker.cashflow
+        except Exception as e:
+            raise AppException(
+                f"Failed to fetch cashflow history for symbol: {symbol}") from e
+
+        if cashflow is None or cashflow.empty:
+            return []
+
+        points: list[CashflowHistoryPointSchema] = []
+
+        # yfinance cashflow columns are fiscal period end dates.
+        for fiscal_period_end in sorted(cashflow.columns):
+            column = cashflow[fiscal_period_end]
+            operating = column.get("Operating Cash Flow")
+            investing = column.get("Investing Cash Flow")
+            financing = column.get("Financing Cash Flow")
+
+            if operating is None and investing is None and financing is None:
+                continue
+
+            points.append(
+                CashflowHistoryPointSchema(
+                    year=int(fiscal_period_end.year),
+                    operating_cashflow=float(operating) if operating is not None and not math.isnan(
+                        float(operating)) else None,
+                    investing_cashflow=float(investing) if investing is not None and not math.isnan(
+                        float(investing)) else None,
+                    financing_cashflow=float(financing) if financing is not None and not math.isnan(
+                        float(financing)) else None,
+                )
+            )
+
+        points = points[-years:]
+        points_dict = [point.model_dump() for point in points]
+        redis_cache.set(cache_key, points_dict)
+        return points
+
+    def get_performance_history(self, symbol: str, years: int) -> list[PerformanceHistoryPointSchema]:
+        cache_key = f"stock:performance-history:v1:{symbol}:{years}"
+        cached = redis_cache.get(cache_key)
+        if cached is not None:
+            return [PerformanceHistoryPointSchema(**point) for point in cached]
+
+        try:
+            ticker = Ticker(symbol)
+            financials = ticker.financials
+            income_stmt = ticker.income_stmt
+        except Exception as e:
+            raise AppException(
+                f"Failed to fetch performance history for symbol: {symbol}") from e
+
+        statement = financials if financials is not None and not financials.empty else income_stmt
+        if statement is None or statement.empty:
+            return []
+
+        points: list[PerformanceHistoryPointSchema] = []
+        for fiscal_period_end in sorted(statement.columns):
+            column = statement[fiscal_period_end]
+
+            revenue = column.get("Total Revenue")
+            if revenue is None:
+                revenue = column.get("Operating Revenue")
+
+            operating_income = column.get("Operating Income")
+            net_income = column.get("Net Income")
+
+            if revenue is None and operating_income is None and net_income is None:
+                continue
+
+            points.append(
+                PerformanceHistoryPointSchema(
+                    year=int(fiscal_period_end.year),
+                    revenue=float(revenue) if revenue is not None and not math.isnan(
+                        float(revenue)) else None,
+                    operating_income=float(operating_income) if operating_income is not None and not math.isnan(
+                        float(operating_income)) else None,
+                    net_income=float(net_income) if net_income is not None and not math.isnan(
+                        float(net_income)) else None,
+                )
+            )
+
+        points = points[-years:]
         points_dict = [point.model_dump() for point in points]
         redis_cache.set(cache_key, points_dict)
         return points

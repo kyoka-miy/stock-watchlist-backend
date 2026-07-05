@@ -5,6 +5,8 @@ import pandas as pd
 from app.domain.schemas.stock_search_response import StockSearchResponse
 from app.domain.schemas.stock_price_history_response import PricePointSchema, StockPriceHistoryResponse
 from app.domain.schemas.stock_dividend_history_response import StockDividendHistoryResponse
+from app.domain.schemas.stock_cashflow_history_response import StockCashflowHistoryResponse
+from app.domain.schemas.stock_performance_history_response import StockPerformanceHistoryResponse
 
 from app.exceptions.app_exception import AppException
 from app.service.dependencies import get_stock_info_provider
@@ -99,6 +101,55 @@ class StockUseCase:
             latest_dividend_yield=latest_dividend_yield,
             growth_rate_percent=growth_rate_percent,
             average_payout_ratio=average_payout_ratio,
+        )
+
+    def get_cashflow_history(self, symbol: str, years: int) -> StockCashflowHistoryResponse:
+        points = self.stock_info_provider.get_cashflow_history(symbol, years)
+        return StockCashflowHistoryResponse(
+            symbol=symbol,
+            years=years,
+            points=points,
+        )
+
+    def get_performance_history(self, symbol: str, years: int) -> StockPerformanceHistoryResponse:
+        points = self.stock_info_provider.get_performance_history(
+            symbol, years)
+
+        revenue_growth_percent = None
+        operating_margin_percent = None
+        net_income_growth_percent = None
+
+        if len(points) >= 2:
+            first = points[0]
+            last = points[-1]
+
+            if first.revenue is not None and first.revenue > 0 and last.revenue is not None:
+                revenue_growth_percent = round(
+                    ((last.revenue / first.revenue) - 1) * 100,
+                    2,
+                )
+
+            if first.net_income is not None and first.net_income > 0 and last.net_income is not None:
+                net_income_growth_percent = round(
+                    ((last.net_income / first.net_income) - 1) * 100,
+                    2,
+                )
+
+        if points:
+            latest = points[-1]
+            if latest.revenue is not None and latest.revenue > 0 and latest.operating_income is not None:
+                operating_margin_percent = round(
+                    (latest.operating_income / latest.revenue) * 100,
+                    2,
+                )
+
+        return StockPerformanceHistoryResponse(
+            symbol=symbol,
+            years=years,
+            points=points,
+            revenue_growth_percent=revenue_growth_percent,
+            operating_margin_percent=operating_margin_percent,
+            net_income_growth_percent=net_income_growth_percent,
         )
 
     def _search_csv(self, query: str) -> list[dict[str, str]]:

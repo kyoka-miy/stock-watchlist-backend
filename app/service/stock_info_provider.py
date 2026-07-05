@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from app.domain.schemas.stock_price_history_response import PricePointSchema
 from app.domain.schemas.stock_dividend_history_response import DividendHistoryPointSchema
+from app.domain.schemas.stock_cashflow_history_response import CashflowHistoryPointSchema
+from app.domain.schemas.stock_performance_history_response import PerformanceHistoryPointSchema
 
 
 class StockInfoProvider(ABC):
@@ -26,4 +28,12 @@ class StockInfoProvider(ABC):
 
     @abstractmethod
     def get_dividend_history(self, symbol: str, years: int) -> list[DividendHistoryPointSchema]:
+        pass
+
+    @abstractmethod
+    def get_cashflow_history(self, symbol: str, years: int) -> list[CashflowHistoryPointSchema]:
+        pass
+
+    @abstractmethod
+    def get_performance_history(self, symbol: str, years: int) -> list[PerformanceHistoryPointSchema]:
         pass
