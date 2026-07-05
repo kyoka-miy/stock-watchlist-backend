@@ -7,6 +7,8 @@ name = "pypi"
 fastapi = "*"
 uvicorn = "*"
 pydantic-settings = "*"
+pydantic = "*"
+email-validator = "*"
 psycopg2-binary = "*"
 alembic = "*"
 sqlalchemy = "*"
@@ -16,7 +18,6 @@ pykakasi = "*"
 redis = "*"
 google-auth = "*"
 python-jose = "*"
-pydantic = "*"
 
 [dev-packages]
 
