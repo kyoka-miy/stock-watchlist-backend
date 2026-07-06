@@ -8,6 +8,7 @@ from jose import jwt
 from datetime import datetime, timedelta, timezone
 
 from app.config import settings
+from app.exceptions.app_exception import AppException
 from app.service.account_service import AccountService
 
 
@@ -16,12 +17,18 @@ class AuthUseCase:
         self.account_service = account_service
 
     def google_login(self, idToken: str, response: Response) -> LoginResponse:
-        payload = id_token.verify_oauth2_token(
-            idToken,
-            requests.Request(),
-            settings.GOOGLE_CLIENT_ID
-        )
+        try:
+            payload = id_token.verify_oauth2_token(
+                idToken,
+                requests.Request(),
+                settings.GOOGLE_CLIENT_ID
+            )
+        except ValueError as e:
+            raise AppException("Invalid Google ID token") from e
+
         google_id = payload.get("sub")
+        if not google_id:
+            raise AppException("Google account ID is missing from token")
 
         account = self.account_service.get_account_by_google_id(google_id)
         if not account:
