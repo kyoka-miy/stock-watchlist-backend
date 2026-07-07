@@ -23,9 +23,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 async def app_exception_handler(request: Request, exc: AppException):
+    content = {"message": exc.message}
+    if getattr(exc, "details", None) is not None:
+        content["details"] = exc.details
+
     return JSONResponse(
         status_code=400,
-        content={"message": exc.message}
+        content=content
     )
 
 async def system_exception_handler(request: Request, exc: Exception):

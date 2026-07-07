@@ -21,6 +21,9 @@ from app.util.japanese_stock_csv_utils import (
 
 
 class YFinanceInfoProviderImpl(StockInfoProvider):
+    def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
+
     def get_valid_symbols(self, symbols: list[str]) -> list[str]:
         valid_symbols = []
         for symbol in symbols:
@@ -61,13 +64,44 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
     def search_symbols_by_query(self, query: str) -> list[dict[str, str]]:
         results = []
         try:
-            search_results = yf.Search(query, max_results=10).quotes
+            self.logger.info(
+                "Start yfinance search",
+                extra={"query": query, "query_len": len(query)}
+            )
+
+            search_obj = yf.Search(query, max_results=10)
+            search_results = search_obj.quotes
+
+            self.logger.info(
+                "yfinance search finished",
+                extra={
+                    "query": query,
+                    "result_count": len(search_results) if search_results is not None else 0,
+                },
+            )
+
             for result in search_results:
                 if result.get(Constants.EXCHANGE) in Constants.ALLOWED_EXCHANGES:
                     results.append(
                         {Constants.SYMBOL: result[Constants.SYMBOL], Constants.NAME: result.get("shortname")})
-        except Exception:
-            raise AppException(f"Failed to search stocks for query: {query}")
+        except Exception as e:
+            self.logger.exception(
+                "yfinance search failed",
+                extra={
+                    "query": query,
+                    "query_len": len(query),
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                },
+            )
+            raise AppException(
+                f"Failed to search stocks for query: {query}",
+                details={
+                    "provider": "yfinance",
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                },
+            )
 
         return results
 
