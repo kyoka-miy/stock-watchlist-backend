@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
 from app.domain.schemas.stock_list_schema import StockListSchema
 from app.domain.schemas.stock_list_with_count_schema import StockListWithCountSchema
 from app.service.stock_info_provider import StockInfoProvider
@@ -29,6 +30,7 @@ class StockListUseCase:
         self.stock_list_service = stock_list_service
         self.stock_list_stock_service = stock_list_stock_service
         self.stock_info_provider = stock_info_provider
+        self.logger = logging.getLogger("uvicorn.error")
 
     def create_stock_list(self, name: str, account_id: int) -> StockListSchema:
         return self.stock_list_service.create_stock_list(
@@ -82,7 +84,20 @@ class StockListUseCase:
                 self._fetch_info, symbol): symbol for symbol in symbols}
 
             for future in as_completed(future_to_symbol):
-                symbol, info = future.result()
+                symbol = future_to_symbol[future]
+                try:
+                    symbol, info = future.result()
+                except Exception as e:
+                    self.logger.exception(
+                        "Skip symbol due to fetch failure",
+                        extra={
+                            "symbol": symbol,
+                            "error_type": type(e).__name__,
+                            "error_message": str(e),
+                        },
+                    )
+                    continue
+
                 if not info or info.get(Constants.NAME) is None:
                     continue
 

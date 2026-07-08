@@ -22,7 +22,7 @@ from app.util.japanese_stock_csv_utils import (
 
 class YFinanceInfoProviderImpl(StockInfoProvider):
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger("uvicorn.error")
 
     def get_valid_symbols(self, symbols: list[str]) -> list[str]:
         valid_symbols = []
@@ -37,8 +37,9 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
         return valid_symbols
 
     def get_stock_info(self, symbol: str) -> dict | None:
-        if (redis_cache.get(symbol)):
-            return redis_cache.get(symbol)
+        cached = redis_cache.get(symbol)
+        if cached:
+            return cached
 
         info = None
         try:
@@ -55,7 +56,15 @@ class YFinanceInfoProviderImpl(StockInfoProvider):
                 if japaneseMarket is not None:
                     info[Constants.MARKET] = japaneseMarket
             redis_cache.set(symbol, info)
-        except Exception:
+        except Exception as e:
+            self.logger.exception(
+                "yfinance get_stock_info failed",
+                extra={
+                    "symbol": symbol,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                },
+            )
             raise AppException(
                 f"Failed to fetch stock info for symbol: {symbol}")
 
