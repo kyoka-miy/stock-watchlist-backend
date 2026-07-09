@@ -36,7 +36,7 @@ class AuthUseCase:
             value=refresh_token,
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="none",
             max_age=60 * 60 * 24 * 30,
         )
 
@@ -73,6 +73,6 @@ class AuthUseCase:
             key="refresh_token",
             httponly=True,
             secure=True,
-            samesite="lax",
+            samesite="none",
         )
         return MessageResponse(message="Logged out successfully")
